@@ -66,7 +66,8 @@ RUN rm -rf /usr/share/doc && \
 # --------------------
 # 🔑 JENKINS DOCKER ACCESS
 # --------------------
-RUN usermod -aG docker jenkins
+#RUN usermod -aG docker jenkins
+RUN groupadd docker && usermod -aG docker jenkins
 
 # --------------------
 # ✅ SET DEFAULT BACK TO JENKINS
