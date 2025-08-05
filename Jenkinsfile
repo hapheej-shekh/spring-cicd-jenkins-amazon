@@ -73,11 +73,11 @@ pipeline {
 					sh '''
 						if ! kubectl get secret ecr-secret --namespace=default > /dev/null 2>&1; then
 						  echo "🔐 Secret doesn't exist. Creating..."
-						  aws ecr get-login-password --region ap-south-1 | \
+						  PASSWORD=$(aws ecr get-login-password --region ap-south-1)
 						  kubectl create secret docker-registry ecr-secret \
 							--docker-server=697624189023.dkr.ecr.ap-south-1.amazonaws.com \
 							--docker-username=AWS \
-							--docker-password-stdin \
+							--docker-password="$PASSWORD" \
 							--namespace=default
 						else
 						  echo "✅ Secret already exists. Skipping creation."
