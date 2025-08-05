@@ -5,10 +5,10 @@ REM === Set working directory to the script's directory ===
 cd /d %~dp0
 
 REM === Variables for base image (custom Jenkins + AWS CLI, Maven, etc.) ===
-SET BASE_IMAGE_DIR=Amazon-Docker-Custom-Image
+SET BASE_IMAGE_DIR=..\spring-cloud-custom-image\
 SET BASE_IMAGE_NAME=amazon-cli-kubectl
 SET JENKINS_CONTAINER_NAME=docker-jenkins-amazon
-SET JENKINS_PORT=8080
+SET JENKINS_PORT=9095
 
 REM === Variables for Spring Boot project ===
 SET PROJECT_IMAGE_NAME=project-jenkins-amazon
@@ -26,14 +26,12 @@ docker rm -f %JENKINS_CONTAINER_NAME% >nul 2>&1
 echo ===============================
 echo STEP 1: Build Base Image (%BASE_IMAGE_NAME%)
 echo ===============================
-cd %BASE_IMAGE_DIR%
-docker build -t %BASE_IMAGE_NAME% .
+docker build -t %BASE_IMAGE_NAME% %BASE_IMAGE_DIR%
 IF ERRORLEVEL 1 (
     echo Base image build failed!
     pause
     exit /b
 )
-cd ..
 
 
 echo ==================================================
@@ -48,9 +46,10 @@ echo ===============================
 docker run -d ^
   --name %JENKINS_CONTAINER_NAME% ^
   -p %JENKINS_PORT%:8080 ^
+  -u root ^
   -v jenkins_home:/var/jenkins_home ^
-  -v //var/run/docker.sock:/var/run/docker.sock ^
-  -v %cd%:/workspace ^
+  -v /var/run/docker.sock:/var/run/docker.sock ^
+  -v jenkins_home:/var/jenkins_home ^
   %BASE_IMAGE_NAME%
 
 IF ERRORLEVEL 1 (
