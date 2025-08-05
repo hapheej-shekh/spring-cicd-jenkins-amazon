@@ -70,12 +70,12 @@ pipeline {
 		stage('Create imagePullSecret for EKS') {
 			steps {
 				withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'amazon-creds']]) {
-					sh '''
-						aws ecr get-login-password --region $AWS_REGION | \
+					sh '''			
 						kubectl create secret docker-registry ecr-secret \
-						--docker-server=$ECR_REGISTRY \
+						--docker-server=697624189023.dkr.ecr.ap-south-1.amazonaws.com \
 						--docker-username=AWS \
-						--docker-password-stdin || true
+						--docker-password=$(aws ecr get-login-password --region ap-south-1) \
+						--namespace=default || true
 					'''
 				}
 			}
@@ -83,19 +83,21 @@ pipeline {
 
 		stage('Update K8s Deployment') {
 			steps {
-				sh '''
-					chmod +x scripts/eks-login.sh
-					chmod +x scripts/deploy.sh
+				withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'amazon-creds']]) {
+					sh '''
+						chmod +x scripts/eks-login.sh
+						chmod +x scripts/deploy.sh
 
-					echo "Logging into EKS..."
-					./scripts/eks-login.sh
+						echo "Logging into EKS..."
+						./scripts/eks-login.sh
 
-					echo "Updating deployment with new image...Kubernetes resources: deployment"
-					kubectl set image deployment/$IMAGE_NAME $CONTAINER_NAME=$ECR_REPO_URI:$IMAGE_TAG || true
+						echo "Updating deployment with new image...Kubernetes resources: deployment"
+						kubectl set image deployment/$IMAGE_NAME $CONTAINER_NAME=$ECR_REPO_URI:$IMAGE_TAG || true
 
-					echo "Applying all configs (fallback)..."
-					./scripts/deploy.sh
-				'''
+						echo "Applying all configs (fallback)..."
+						./scripts/deploy.sh
+					'''
+				}
 			}
 		}
 
