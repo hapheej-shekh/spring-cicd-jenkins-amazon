@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: project-jenkins-amazon
+  labels:
+    app: project-jenkins-amazon
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: project-jenkins-amazon
+  template:
+    metadata:
+      labels:
+        app: project-jenkins-amazon # Must match Service's selector in service.yaml-> spec.selector.app: project-jenkins-amazon 
+    spec:
+      containers:
+        - name: project-jenkins-amazon-cont
+          image: 697624189023.dkr.ecr.ap-south-1.amazonaws.com/cicd-jenkins-amazon-repo:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          env:
+            - name: JAVA_OPTS
+              value: "-Xms512m -Xmx1024m"
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              cpu: "500m"
+              memory: "1024Mi"
+      imagePullSecrets:
+        - name: ecr-secret

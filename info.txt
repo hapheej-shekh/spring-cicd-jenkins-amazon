@@ -1,0 +1,12 @@
+├── k8s/                         # Kubernetes manifests (recommended name)
+│   ├── deployment.yaml          # EKS deployment definition
+│   └── service.yaml             # EKS service definition
+├── scripts/                     # Utility shell scripts
+│   ├── eks-login.sh             # Authenticates kubectl to EKS
+│   └── deploy.sh                # Applies Kubernetes manifests
+├── Jenkinsfile                  # Jenkins pipeline
+├── Dockerfile                   # Docker image definition
+└── src/                         # Java Spring Boot source code
+
+
+
