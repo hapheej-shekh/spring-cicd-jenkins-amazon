@@ -67,25 +67,33 @@ pipeline {
             }
         }
 
-		stage('Create imagePullSecret for EKS') {
-			steps {
-				withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'amazon-creds']]) {
-					sh '''
-						if ! kubectl get secret ecr-secret --namespace=default > /dev/null 2>&1; then
-						  echo "🔐 Secret doesn't exist. Creating..."
-						  PASSWORD=$(aws ecr get-login-password --region ap-south-1)
-						  kubectl create secret docker-registry ecr-secret \
-							--docker-server=697624189023.dkr.ecr.ap-south-1.amazonaws.com \
-							--docker-username=AWS \
-							--docker-password="$PASSWORD" \
-							--namespace=default
-						else
-						  echo "✅ Secret already exists. Skipping creation."
-						fi
-					'''
-				}
-			}
+stage('Verify kubectl connectivity') {
+	steps {
+		sh '''
+			echo "Current context:"
+			kubectl config current-context
+			echo "Cluster nodes:"
+			kubectl get nodes
+		'''
+	}
+}
+
+stage('Create imagePullSecret for EKS') {
+	steps {
+		withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'amazon-creds']]) {
+			sh '''
+				echo "🔍 Checking for existing ECR secret..."
+				aws ecr get-login-password --region ap-south-1 | \
+				kubectl create secret docker-registry ecr-secret \
+				  --docker-server=697624189023.dkr.ecr.ap-south-1.amazonaws.com \
+				  --docker-username=AWS \
+				  --docker-password="$(cat -)" \
+				  --namespace=default \
+				  --dry-run=client -o yaml | kubectl apply -f -
+			'''
 		}
+	}
+}
 
 		stage('Update K8s Deployment') {
 			steps {
