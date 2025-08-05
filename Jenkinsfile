@@ -20,6 +20,7 @@ pipeline {
     }
 
     stages {
+	
         stage('Checkout') {
             steps {
                 git branch: 'main', url: 'https://github.com/hapheej-shekh/spring-cicd-jenkins-amazon.git'
@@ -108,8 +109,8 @@ pipeline {
                 '''
             }
         }
-		
-
+	}
+	
     post {
         success {
             echo '🚀 Deployment Success!'
