@@ -29,7 +29,7 @@ echo ===============================
 cd %BASE_IMAGE_DIR%
 docker build -t %BASE_IMAGE_NAME% .
 IF ERRORLEVEL 1 (
-    echo ❌ Base image build failed!
+    echo Base image build failed!
     pause
     exit /b
 )
@@ -49,31 +49,34 @@ docker run -d ^
   --name %JENKINS_CONTAINER_NAME% ^
   -p %JENKINS_PORT%:8080 ^
   -v jenkins_home:/var/jenkins_home ^
+  -v //var/run/docker.sock:/var/run/docker.sock ^
+  -v %cd%:/workspace ^
   %BASE_IMAGE_NAME%
 
 IF ERRORLEVEL 1 (
-    echo ❌ Failed to run Jenkins container!
+    echo Failed to run Jenkins container!
     pause
     exit /b
 )
 
 
 REM === Print port mapping for Jenkins ===
-echo 🔍 Jenkins is running on:
+echo Jenkins is running on:
 docker port %JENKINS_CONTAINER_NAME%
+
 
 echo =================================
 echo STEP 4: Build Spring Boot Project
 echo =================================
 call mvn clean install -DskipTests
 IF ERRORLEVEL 1 (
-    echo ❌ Maven build failed!
+    echo Maven build failed!
     pause
     exit /b
 )
 
 IF NOT EXIST target (
-    echo ❌ Build failed or target folder missing.
+    echo Build failed or target folder missing.
     pause
     exit /b
 )
@@ -82,6 +85,7 @@ echo ===============================
 echo STEP 5: Build Project Docker Image (%PROJECT_IMAGE_NAME%)
 echo ===============================
 docker build -t %PROJECT_IMAGE_NAME% .
+
 
 echo ===============================
 echo STEP 6: Run Project Docker Container
@@ -95,8 +99,11 @@ docker run -d ^
   %PROJECT_IMAGE_NAME%
 
 echo --------------------------------
-echo ✅ Jenkins: http://localhost:%JENKINS_PORT%
-echo ✅ App    : http://localhost:%HOST_PORT%
+echo Jenkins: http://localhost:%JENKINS_PORT%
+echo App    : http://localhost:%HOST_PORT%
 echo --------------------------------
+
+echo Host Jenkins Password
+docker exec %JENKINS_CONTAINER_NAME% cat /var/jenkins_home/secrets/initialAdminPassword
 
 pause
