@@ -4,6 +4,8 @@ pipeline {
 
     environment {
 	
+		// AWS CLI will use 'base-user' profile configured in ~/.aws
+		AWS_PROFILE = 'base-user'
         AWS_REGION = 'ap-south-1'
         AWS_ACCOUNT_ID = '697624189023'
         IMAGE_NAME = 'project-jenkins-amazon'
@@ -96,9 +98,9 @@ pipeline {
         stage('Update kube Config') {
             steps {
                 sh '''
-                    aws eks --region $AWS_REGION update-kubeconfig \
-                        --name $CLUSTER_NAME \
-                        --no-cli-pager
+					aws eks --region $AWS_REGION update-kubeconfig \
+						--name $CLUSTER_NAME \
+						--profile $PROFILE_USER --no-cli-pager
                 '''
             }
         }
