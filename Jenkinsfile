@@ -11,7 +11,7 @@ pipeline {
         CONTAINER_NAME = 'project-jenkins-amazon-cont'
         ECR_REPO = 'cicd-jenkins-amazon-repo'
         ECR_REGISTRY = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
-        ECR_REPO_URI = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/{$ECR_REPO}"
+        ECR_REPO_URI = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}"
         ECR_CREDENTIALS_ID = 'amazon-creds'
         WEB_PORT = '8085'
         JENKINS_PORT = '8080'
