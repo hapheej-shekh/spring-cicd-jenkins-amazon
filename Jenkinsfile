@@ -4,7 +4,7 @@ pipeline {
 
     environment {
         AWS_REGION = 'ap-south-1'
-        AWS_ACCOUNT_ID = 697624189023
+        AWS_ACCOUNT_ID = '697624189023'
         IMAGE_NAME = 'project-jenkins-amazon'
         IMAGE_TAG = '$BUILD_NUMBER'
         CONTAINER_NAME = 'project-jenkins-amazon-cont'
@@ -12,8 +12,8 @@ pipeline {
         ECR_REGISTRY = '$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com'
         ECR_REPO_URI = '$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO'
         ECR_CREDENTIALS_ID = 'amazon-creds'
-        WEB_PORT = 8085
-        JENKINS_PORT = 8080
+        WEB_PORT = '8085'
+        JENKINS_PORT = '8080'
         ROLE = 'Admin-Group-Role'
         CLUSTER_NAME = 'admin-eks-cluster'
         ROLE_ARN = 'arn:aws:iam::$AWS_ACCOUNT_ID:role/$ROLE'
@@ -43,13 +43,15 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t $IMAGE_NAME:$BUILD_NUMBER .'
+                sh '''
+                    docker build -t $IMAGE_NAME:$BUILD_NUMBER .
+                '''
             }
         }
 
         stage('Login to ECR') {
             steps {
-                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: "$ECR_CREDENTIALS_ID"]]) {
+                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: '$ECR_CREDENTIALS_ID']]) {
                     sh '''
                         aws ecr get-login-password --region $AWS_REGION | \
                         docker login --username AWS --password-stdin $ECR_REGISTRY
