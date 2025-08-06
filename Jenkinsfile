@@ -15,7 +15,7 @@ pipeline {
         WEB_PORT = 8085
         JENKINS_PORT = 8080
 		
-		CLUSTER_NAME = 'amazon-eks-cluster'
+		CLUSTER_NAME = 'admin-eks-cluster'
 		IMAGE_TAG = "${BUILD_NUMBER}"
     }
 
