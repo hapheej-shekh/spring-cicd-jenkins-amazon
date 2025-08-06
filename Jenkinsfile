@@ -66,7 +66,7 @@ pipeline {
                 '''
             }
         }
-
+/*
 stage('Verify kubectl connectivity') {
 	steps {
 		sh '''
@@ -77,7 +77,7 @@ stage('Verify kubectl connectivity') {
 		'''
 	}
 }
-
+*/
 stage('Create imagePullSecret for EKS') {
 	steps {
 		withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'amazon-creds']]) {
