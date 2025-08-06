@@ -7,6 +7,7 @@ pipeline {
         AWS_REGION = 'ap-south-1'
         AWS_ACCOUNT_ID = '697624189023'
         IMAGE_NAME = 'project-jenkins-amazon'
+		IMAGE_TAG = "${BUILD_NUMBER}"
         CONTAINER_NAME = 'project-jenkins-amazon-cont'
         ECR_REPO = 'cicd-jenkins-amazon-repo'
 		ECR_REGISTRY = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
@@ -15,8 +16,11 @@ pipeline {
         WEB_PORT = 8085
         JENKINS_PORT = 8080
 		
+		ROLE = Admin-Group-Role
 		CLUSTER_NAME = 'admin-eks-cluster'
-		IMAGE_TAG = "${BUILD_NUMBER}"
+		ROLE_ARN = "arn:aws:iam::${AWS_ACCOUNT_ID}:role/${ROLE}"
+        SESSION_NAME = "eks-admin-session"
+		PROFILE_USER = eks-admin
     }
 
     stages {
@@ -67,17 +71,46 @@ pipeline {
             }
         }
 /*
-stage('Verify kubectl connectivity') {
+stage('Assume Role') {
 	steps {
-		sh '''
-			echo "Current context:"
-			kubectl config current-context
-			echo "Cluster nodes:"
-			kubectl get nodes
-		'''
+		script {
+			def creds = sh(script: '''
+				aws sts assume-role \
+				  --role-arn ${ROLE_ARN} \
+				  --role-session-name ${SESSION_NAME} \
+				  --no-cli-pager \
+				  --output json
+			''', returnStdout: true).trim()
+
+			def json = readJSON text: creds
+
+			env.AWS_ACCESS_KEY_ID     = json.Credentials.AccessKeyId
+			env.AWS_SECRET_ACCESS_KEY = json.Credentials.SecretAccessKey
+			env.AWS_SESSION_TOKEN     = json.Credentials.SessionToken
+		}
 	}
 }
 */
+stage('Update kube Config') {
+	steps {
+		sh '''
+			aws eks --region $REGION update-kubeconfig \
+				--name $CLUSTER_NAME \
+				--no-cli-pager
+		'''
+	}
+}
+
+
+stage('Verify Cluster Connectivity') {
+	steps {
+		sh '''
+			echo "Current context:"
+			aws eks list-clusters --profile ${PROFILE_USER} --region ${REGION} --no-cli-pager
+		'''
+	}
+}
+
 stage('Create imagePullSecret for EKS') {
 	steps {
 		withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'amazon-creds']]) {
