@@ -114,22 +114,37 @@ pipeline {
             }
         }
 
-        stage('Create imagePullSecret for EKS') {
-            steps {
-                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'amazon-creds']]) {
-                    sh '''
-                        echo "🔍 Checking for existing ECR secret..."
-                        aws ecr get-login-password --region $AWS_REGION | \
-                        kubectl create secret docker-registry ecr-secret \
-                          --docker-server=$ECR_REGISTRY \
-                          --docker-username=AWS \
-                          --docker-password="\$(cat -)" \
-                          --namespace=default \
-                          --dry-run=client -o yaml | kubectl apply -f -
-                    '''
-                }
-            }
-        }
+		stage('Create imagePullSecret for EKS') {
+			steps {
+				withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'amazon-creds']]) {
+					sh '''
+						echo "🔧 Updating kubeconfig for cluster access..."
+						export AWS_PROFILE=$PROFILE_USER
+						export KUBECONFIG=/root/.kube/config
+
+						aws eks --region $AWS_REGION update-kubeconfig \
+							--name $CLUSTER_NAME \
+							--profile $AWS_PROFILE --no-cli-pager
+
+						echo "🔍 Verifying context and namespace..."
+						kubectl get ns
+						kubectl config current-context
+						kubectl config view --minify
+						kubectl get sts || echo "STS access may be restricted"
+
+						echo "🔐 Creating ECR imagePullSecret..."
+						aws ecr get-login-password --region $AWS_REGION | \
+						kubectl create secret docker-registry ecr-secret \
+							--docker-server=$ECR_REGISTRY \
+							--docker-username=AWS \
+							--docker-password="$(cat -)" \
+							--namespace=default \
+							--dry-run=client -o yaml | kubectl apply -f - | kubectl apply --validate=false -f -
+					'''
+				}
+			}
+		}
+
 
         stage('Update K8s Deployment') {
             steps {
