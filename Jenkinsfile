@@ -5,7 +5,7 @@ pipeline {
     environment {
 	
 		// AWS CLI will use 'base-user' profile configured in ~/.aws
-		AWS_PROFILE = 'dev-user'
+		//AWS_PROFILE = 'dev-user'
         AWS_REGION = 'ap-south-1'
         AWS_ACCOUNT_ID = '697624189023'
         IMAGE_NAME = 'project-jenkins-amazon'
