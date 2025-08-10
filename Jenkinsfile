@@ -163,19 +163,19 @@ pipeline {
                 withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'amazon-creds']]) {
                     sh '''
 					
-						echo "Update K8s Deployment---started"
-                        chmod +x scripts/eks-login.sh
-                        chmod +x scripts/deploy.sh
+						echo "Deploy to EKS --- started"
 
-                        echo "Logging into EKS..."
-                        ./scripts/eks-login.sh
+						# Login to cluster
+						./scripts/eks-login.sh
 
-                        echo "Updating deployment with new image...Kubernetes resources: deployment"
-                        kubectl set image deployment/$IMAGE_NAME $CONTAINER_NAME=$ECR_REPO_URI:$IMAGE_TAG || true
+						# Apply manifests (idempotent)
+						kubectl apply -f deployment.yaml
+						kubectl apply -f service.yaml
 
-                        echo "Applying all configs (fallback)..."
-                        ./scripts/deploy.sh
-						echo "Update K8s Deployment---finished"
+						# Update image (will only change the container image without touching other specs)
+						kubectl set image deployment/$IMAGE_NAME $CONTAINER_NAME=$ECR_REPO_URI:$IMAGE_TAG --namespace=default
+
+						echo "Deploy to EKS --- finished"
                     '''
                 }
             }
