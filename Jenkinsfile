@@ -166,7 +166,7 @@ pipeline {
 						echo "Deploy to EKS --- started"
 
 						# Login to cluster
-						./scripts/eks-login.sh
+						chmod +x /scripts/eks-login.sh
 
 						# Apply manifests (idempotent)
 						kubectl apply -f deployment.yaml
