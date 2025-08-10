@@ -10,7 +10,7 @@ pipeline {
         AWS_ACCOUNT_ID = '697624189023'
         IMAGE_NAME = 'project-jenkins-amazon'
         //IMAGE_TAG = "${BUILD_NUMBER}"
-		IMAGE_TAG = '25'
+		IMAGE_TAG = '27'
         CONTAINER_NAME = 'project-jenkins-amazon-cont'
         ECR_REPO = 'cicd-jenkins-amazon-repo'
         ECR_REGISTRY = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
@@ -149,7 +149,7 @@ pipeline {
 							--docker-username=AWS \
 							--docker-password=$PASSWORD \
 							--namespace=default \
-							--dry-run=client -o yaml | kubectl apply --validate=false -f -
+							--dry-run=client -o yaml | kubectl apply -f -
 						
 						echo "Create imagePullSecret for EKS---finished"
 					'''
