@@ -132,12 +132,16 @@ pipeline {
 						kubectl config view --minify
 						kubectl get sts || echo "STS access may be restricted"
 
+						PASSWORD=$(aws ecr get-login-password --region $AWS_REGION)
+						
+						echo "Password: $PASSWORD"
+
 						echo "🔐 Creating ECR imagePullSecret..."
 						aws ecr get-login-password --region $AWS_REGION | \
 						kubectl create secret docker-registry ecr-secret \
 							--docker-server=$ECR_REGISTRY \
 							--docker-username=AWS \
-							--docker-password-stdin \
+							--docker-password=$PASSWORD \
 							--namespace=default \
 							--dry-run=client -o yaml | kubectl apply --validate=false -f -
 					'''
