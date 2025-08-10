@@ -169,8 +169,8 @@ pipeline {
 						chmod +x scripts/eks-login.sh
 
 						# Apply manifests (idempotent)
-						kubectl apply -f deployment.yaml
-						kubectl apply -f service.yaml
+						kubectl apply -f k8s/deployment.yaml
+						kubectl apply -f k8s/service.yaml
 
 						# Update image (will only change the container image without touching other specs)
 						kubectl set image deployment/$IMAGE_NAME $CONTAINER_NAME=$ECR_REPO_URI:$IMAGE_TAG --namespace=default
