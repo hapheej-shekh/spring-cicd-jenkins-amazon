@@ -19,7 +19,7 @@ spec:
           image: 697624189023.dkr.ecr.ap-south-1.amazonaws.com/cicd-jenkins-amazon-repo:latest
           imagePullPolicy: Always
           ports:
-            - containerPort: 8080
+            - containerPort: 8085
           env:
             - name: JAVA_OPTS
               value: "-Xms512m -Xmx1024m"

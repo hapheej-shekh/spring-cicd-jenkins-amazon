@@ -5,12 +5,11 @@ pipeline {
     environment {
 	
 		// AWS CLI will use 'base-user' profile configured in ~/.aws
-		//AWS_PROFILE = 'dev-user'
+		//AWS_PROFILE = 'dev-user'	//If using user profiling yet all
         AWS_REGION = 'ap-south-1'
         AWS_ACCOUNT_ID = '697624189023'
         IMAGE_NAME = 'project-jenkins-amazon'
-        //IMAGE_TAG = "${BUILD_NUMBER}"
-		IMAGE_TAG = '27'
+        IMAGE_TAG = "${BUILD_NUMBER}"
         CONTAINER_NAME = 'project-jenkins-amazon-cont'
         ECR_REPO = 'cicd-jenkins-amazon-repo'
         ECR_REGISTRY = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
@@ -22,14 +21,11 @@ pipeline {
         ROLE = 'DevClusterRole'
         CLUSTER_NAME = 'dev-cluster'
         ROLE_ARN = "arn:aws:iam::${AWS_ACCOUNT_ID}:role/${ROLE}"
-        SESSION_NAME = 'eks-admin-session'
-        PROFILE_USER = 'eks-admin'
     }
 
     stages {
 	
 	
-/*
         stage('Checkout') {
             steps {
                 git branch: 'main', url: 'https://github.com/hapheej-shekh/spring-cicd-jenkins-amazon.git'
@@ -75,97 +71,71 @@ pipeline {
                 '''
             }
         }
-*/
 
+		stage('Verify Cluster Connectivity') {
+			steps {
+				sh '''
+					echo "Cluster List:"
+					aws eks list-clusters --region $AWS_REGION --no-cli-pager
+				'''
+			}
+		}
 
+		stage('Create imagePullSecret for EKS') {
+			steps {
+				withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'amazon-creds']]) {
+					sh '''
+						echo "Create imagePullSecret for EKS---started"
+						echo "🔧 Updating kubeconfig for cluster access..."
+						
+						export KUBECONFIG=$WORKSPACE/.kube/config
+						
+						mkdir -p $(dirname $KUBECONFIG)
+						aws eks --region $AWS_REGION update-kubeconfig --name $CLUSTER_NAME --kubeconfig $KUBECONFIG --alias $CLUSTER_NAME
+						
+						echo "🔍 Verifying context and namespace..."
+						kubectl --kubeconfig $KUBECONFIG get ns
+						kubectl --kubeconfig $KUBECONFIG config current-context
+						kubectl --kubeconfig $KUBECONFIG config view --minify
+						kubectl --kubeconfig $KUBECONFIG get sts || echo "STS access may be restricted"
+						
+						PASSWORD=$(aws ecr get-login-password --region $AWS_REGION)
+						
+						echo "🔐 Creating ECR imagePullSecret..."
+						aws ecr get-login-password --region $AWS_REGION | \
+						kubectl --kubeconfig $KUBECONFIG create secret docker-registry ecr-secret \
+							--docker-server=$ECR_REGISTRY \
+							--docker-username=AWS \
+							--docker-password=$PASSWORD \
+							--namespace=default \
+							--dry-run=client -o yaml | kubectl --kubeconfig $KUBECONFIG apply -f -
+						
+						echo "Create imagePullSecret for EKS---finished"
+					'''
+				}
+			}
+		}
 
-
-        /*
-        stage('Assume Role') {
-            steps {
-                script {
-                    def creds = sh(script: """
-                        aws sts assume-role \
-                          --role-arn $ROLE_ARN \
-                          --role-session-name $SESSION_NAME \
-                          --no-cli-pager \
-                          --output json
-                    """, returnStdout: true).trim()
-
-                    def json = readJSON text: creds
-
-                    env.AWS_ACCESS_KEY_ID     = json.Credentials.AccessKeyId
-                    env.AWS_SECRET_ACCESS_KEY = json.Credentials.SecretAccessKey
-                    env.AWS_SESSION_TOKEN     = json.Credentials.SessionToken
-                }
-            }
-        }
-        */
-
-stage('Verify Cluster Connectivity') {
-    steps {
-        sh '''
-            echo "Cluster List:"
-            aws eks list-clusters --region $AWS_REGION --no-cli-pager
-        '''
-    }
-}
-
-stage('Create imagePullSecret for EKS') {
-    steps {
-        withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'amazon-creds']]) {
-            sh '''
-                echo "Create imagePullSecret for EKS---started"
-                echo "🔧 Updating kubeconfig for cluster access..."
-                
-                export KUBECONFIG=$WORKSPACE/.kube/config
-                
-                mkdir -p $(dirname $KUBECONFIG)
-                aws eks --region $AWS_REGION update-kubeconfig --name $CLUSTER_NAME --kubeconfig $KUBECONFIG --alias $CLUSTER_NAME
-                
-                echo "🔍 Verifying context and namespace..."
-                kubectl --kubeconfig $KUBECONFIG get ns
-                kubectl --kubeconfig $KUBECONFIG config current-context
-                kubectl --kubeconfig $KUBECONFIG config view --minify
-                kubectl --kubeconfig $KUBECONFIG get sts || echo "STS access may be restricted"
-                
-                PASSWORD=$(aws ecr get-login-password --region $AWS_REGION)
-                
-                echo "🔐 Creating ECR imagePullSecret..."
-                aws ecr get-login-password --region $AWS_REGION | \
-                kubectl --kubeconfig $KUBECONFIG create secret docker-registry ecr-secret \
-                    --docker-server=$ECR_REGISTRY \
-                    --docker-username=AWS \
-                    --docker-password=$PASSWORD \
-                    --namespace=default \
-                    --dry-run=client -o yaml | kubectl --kubeconfig $KUBECONFIG apply -f -
-                
-                echo "Create imagePullSecret for EKS---finished"
-            '''
-        }
-    }
-}
-
-stage('Update K8s Deployment') {
-    steps {
-        withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'amazon-creds']]) {
-            sh '''
-                echo "Deploy to EKS --- started"
-                
-                export KUBECONFIG=$WORKSPACE/.kube/config
-                
-                # Apply manifests (idempotent)
-                kubectl --kubeconfig $KUBECONFIG apply -f k8s/deployment.yaml
-                kubectl --kubeconfig $KUBECONFIG apply -f k8s/service.yaml
-                
-                # Update image (only container image)
-                kubectl --kubeconfig $KUBECONFIG set image deployment/$IMAGE_NAME $CONTAINER_NAME=$ECR_REPO_URI:$IMAGE_TAG --namespace=default
-                
-                echo "Deploy to EKS --- finished"
-            '''
-        }
-    }
-}
+		stage('Update K8s Deployment') {
+			steps {
+				withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'amazon-creds']]) {
+					sh '''
+						echo "Deploy to EKS --- started"
+						
+						export KUBECONFIG=$WORKSPACE/.kube/config
+						
+						# Apply manifests (idempotent)
+						kubectl --kubeconfig $KUBECONFIG apply -f k8s/deployment.yaml
+						kubectl --kubeconfig $KUBECONFIG apply -f k8s/service.yaml
+						
+						# Update image (only container image)
+						kubectl --kubeconfig $KUBECONFIG set image deployment/$IMAGE_NAME $CONTAINER_NAME=$ECR_REPO_URI:$IMAGE_TAG --namespace=default
+						
+						echo "Deploy to EKS --- finished"
+					'''
+				}
+			}
+		}
 
 
         /*
