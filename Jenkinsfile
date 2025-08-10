@@ -137,9 +137,9 @@ pipeline {
 						kubectl create secret docker-registry ecr-secret \
 							--docker-server=$ECR_REGISTRY \
 							--docker-username=AWS \
-							--docker-password="$(cat -)" \
+							--docker-password-stdin \
 							--namespace=default \
-							--dry-run=client -o yaml | kubectl apply -f - | kubectl apply --validate=false -f -
+							--dry-run=client -o yaml | kubectl apply --validate=false -f -
 					'''
 				}
 			}
