@@ -43,10 +43,17 @@ docker run --rm -u root -v jenkins_home:/var/jenkins_home alpine sh -c "chown -R
 echo ===============================
 echo STEP 3: Run Jenkins Container
 echo ===============================
+
+REM Mounting .aws & .kube to supply profile user with role having permission to access EKS
+REM AWS_PROFILE=base-user, this declared in C:\Users\LENOVO\.aws\credentials
 docker run -d ^
   --name %JENKINS_CONTAINER_NAME% ^
   -p %JENKINS_PORT%:8080 ^
   -u root ^
+  -e AWS_PROFILE=base-user ^
+  -v C:\Users\LENOVO\.aws:/root/.aws ^
+  -v C:\Users\LENOVO\.kube:/root/.kube ^
+  -v C:\Users\LENOVO\.m2:/root/.m2
   -v jenkins_home:/var/jenkins_home ^
   -v /var/run/docker.sock:/var/run/docker.sock ^
   -v jenkins_home:/var/jenkins_home ^

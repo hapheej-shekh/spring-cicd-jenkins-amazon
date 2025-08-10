@@ -5,7 +5,7 @@ pipeline {
     environment {
 	
 		// AWS CLI will use 'base-user' profile configured in ~/.aws
-		AWS_PROFILE = 'base-user'
+		AWS_PROFILE = 'iam-user'
         AWS_REGION = 'ap-south-1'
         AWS_ACCOUNT_ID = '697624189023'
         IMAGE_NAME = 'project-jenkins-amazon'
@@ -18,8 +18,8 @@ pipeline {
         WEB_PORT = '8085'
         JENKINS_PORT = '8080'
 		
-        ROLE = 'Admin-Group-Role'
-        CLUSTER_NAME = 'admin-eks-cluster'
+        ROLE = 'iam-role'
+        CLUSTER_NAME = 'iam-eks-cluster'
         ROLE_ARN = "arn:aws:iam::${AWS_ACCOUNT_ID}:role/${ROLE}"
         SESSION_NAME = 'eks-admin-session'
         PROFILE_USER = 'eks-admin'
