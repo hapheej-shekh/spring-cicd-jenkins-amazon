@@ -64,10 +64,14 @@ pipeline {
         stage('Push to ECR') {
             steps {
                 sh '''
-                    docker tag $IMAGE_NAME:$BUILD_NUMBER $ECR_REPO_URI:$BUILD_NUMBER
-                    docker tag $IMAGE_NAME:$BUILD_NUMBER $ECR_REPO_URI:latest
-                    docker push $ECR_REPO_URI:$BUILD_NUMBER
-                    docker push $ECR_REPO_URI:latest
+                    docker tag $IMAGE_NAME:$IMAGE_TAG $ECR_REPO_URI:$IMAGE_TAG
+                    docker push $ECR_REPO_URI:$IMAGE_TAG
+					
+					#docker tag $IMAGE_NAME:latest $ECR_REPO_URI:latest
+                    #docker push $ECR_REPO_URI:latest
+					
+					#Remove local/host-machine build
+					docker rmi $ECR_REPO_URI:$IMAGE_TAG --force
                 '''
             }
         }
