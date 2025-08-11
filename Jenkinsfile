@@ -71,7 +71,7 @@ pipeline {
                     #docker push $ECR_REPO_URI:latest
 					
 					#Remove local/host-machine build
-					docker rmi $ECR_REPO_URI:$IMAGE_TAG --force
+					docker rmi $IMAGE_NAME:$IMAGE_TAG --force
                 '''
             }
         }
