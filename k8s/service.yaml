@@ -2,6 +2,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: project-jenkins-amazon-service
+  #namespace: spring
 spec:
   selector:
     app: project-jenkins-amazon # <--- Refers to a label on the pod, it is not container name
