@@ -8,6 +8,6 @@ spec:
     app: project-jenkins-amazon # <--- Refers to a label on the pod, it is not container name
   ports:
     - protocol: TCP
-      port: 80
+      port: 8085
       targetPort: 8085
   type: LoadBalancer
